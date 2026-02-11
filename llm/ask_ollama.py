@@ -1,7 +1,11 @@
 import ollama
+from pathlib import Path
+
+
+BASE_DIR = Path(__file__).resolve().parent
 
 def load_file(file_path):
-    with open(file_path, "r") as f:
+    with open(BASE_DIR.parent / file_path, "r") as f:
         return f.read()
 
 
