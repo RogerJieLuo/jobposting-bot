@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+venv/
+*.log
+*.csv
+*.txt
+*_template
+logs/
+note.md
+test.*
+prompts/
+.DS_Store
