@@ -1,0 +1,13 @@
+Candidate Profile:
+- 6+ years backend development experience (Java)
+- Experience with distributed systems and scalable backend services
+- AWS (EC2, S3, Lambda, DynamoDB)
+- SQL + NoSQL databases
+- Production system ownership
+- Experience building high-availability systems
+- Familiar with system design and architecture discussions
+
+Career Goal:
+- Targeting mid-level to mid-senior backend roles
+- Open to stretch roles slightly above current level
+- Willing to learn missing secondary skills quickly
