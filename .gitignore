@@ -8,6 +8,6 @@ config/
 logs/
 note.md
 test.* 
-# prompts/
+prompts/
 tmp/
 .DS_Store
