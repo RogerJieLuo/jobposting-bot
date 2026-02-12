@@ -13,14 +13,3 @@ def save_seen_jobs(seen_jobs):
         for job_id in seen_jobs:
             f.write(job_id + '\n')
 
-import csv
-def write_job_to_csv(job_dict, csv_file="job_results.csv"):
-    file_exists = os.path.isfile(csv_file)
-
-    with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["link", "ollama_answer"])
-        
-        if not file_exists:
-            writer.writeheader()
-        
-        writer.writerow(job_dict)

@@ -4,7 +4,7 @@ venv/
 *.log
 *.csv
 *.txt
-*_template
+config/
 logs/
 note.md
 test.*

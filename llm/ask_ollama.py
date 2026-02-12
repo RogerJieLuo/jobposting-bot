@@ -36,7 +36,7 @@ def analyze_with_ollama(job):
     prompt = build_prompt(job.description, profile, rules)
     messages = [
         {'role': 'system', 'content': 'You are a professional career advisor and job matching assistant for a backend software engineer.'},
-        {'role': 'user', 'content': prompt}
+        {'role': 'user', 'content': f'{prompt}'}
     ]
     
     response = ollama.chat(
