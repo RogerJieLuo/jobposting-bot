@@ -1,4 +1,0 @@
-Candidate Profile:
-- X years backend development experience
-- Experience with XXX, XXX
-- ...
