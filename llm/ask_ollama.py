@@ -2,27 +2,37 @@ import ollama
 from pathlib import Path
 
 
-BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-def load_file(file_path):
-    with open(BASE_DIR.parent / file_path, "r") as f:
+# Per-country prompt dir: prompts/<country>/ (e.g. prompts/canada/, prompts/japan/). Fallback: prompts/default/
+def _prompt_dir(country=None):
+    key = (country or "default").strip().lower()
+    return PROJECT_ROOT / "prompts" / key
+
+
+def _load_prompt_file(filename, country=None):
+    d = _prompt_dir(country)
+    path = d / filename
+    if not path.exists():
+        path = _prompt_dir("default") / filename
+    with open(path, "r") as f:
         return f.read()
 
 
-def load_profile():
-    return load_file("prompts/profile.txt")
+def load_profile(country=None):
+    return _load_prompt_file("profile.txt", country)
 
 
-def load_rules():
-    return load_file("prompts/evaluation_rules.txt")
+def load_rules(country=None):
+    return _load_prompt_file("evaluation_rules.txt", country)
 
 
-def load_prompt_template():
-    return load_file("prompts/job_evaluator.txt")
+def load_prompt_template(country=None):
+    return _load_prompt_file("job_evaluator.txt", country)
     
 
-def build_prompt(job_description, candidate_profile, rules):
-    template = load_prompt_template()
+def build_prompt(job_description, candidate_profile, rules, country=None):
+    template = load_prompt_template(country)
     return template.format(
         candidate_profile=candidate_profile,
         evaluation_rules=rules,
@@ -31,9 +41,10 @@ def build_prompt(job_description, candidate_profile, rules):
 
 
 def analyze_with_ollama(job):
-    profile = load_profile()
-    rules = load_rules()
-    prompt = build_prompt(job.description, profile, rules)
+    country = getattr(job, "country", None) or "default"
+    profile = load_profile(country)
+    rules = load_rules(country)
+    prompt = build_prompt(job.description, profile, rules, country)
     messages = [
         {'role': 'system', 'content': 'You are a professional career advisor and job matching assistant for a backend software engineer.'},
         {'role': 'user', 'content': f'{prompt}'}

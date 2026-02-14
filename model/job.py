@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
-from datetime import datetime
+
 
 @dataclass
 class Job:
@@ -9,10 +9,10 @@ class Job:
     url: str
     company: str
     location: str
+    """Country key for per-country config (e.g. 'canada', 'us', 'japan'). Used for prompts and Slack template."""
+    country: Optional[str] = None
 
     applicants: Optional[int] = None
     description: Optional[str] = None
     decision: Optional[str] = None
     reason: Optional[str] = None
-
-    fetched_at: datetime = field(default_factory=datetime.utcnow)

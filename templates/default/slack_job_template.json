@@ -1,0 +1,31 @@
+{
+    "blocks": [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*New Job Found!*\n*Title:* {{title}}\n*Company:* {{company}}\n*Location:* {{location}}"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*Summary:*\n{{summary}}"
+            }
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "View Job"
+                    },
+                    "url": "{{link}}"
+                }
+            ]
+        }
+    ]
+}

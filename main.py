@@ -1,15 +1,17 @@
 import traceback
-from logger_util import logger
-from job_file import save_seen_jobs, load_seen_jobs
-from scripts.fetch_job import fetch_jobs_for_locations
+from utils.logger import logger
+from utils.seen_jobs import save_seen_jobs, load_seen_jobs
+from crawler.fetch_job import fetch_jobs_for_locations
 from llm.ask_ollama import analyze_with_ollama
 from notify.slack_sender import send_slack_job
 
 
 locations = ["Canada", "United%20States", "Japan"]
-keywords = "software%20engineer" 
-max_jobs_per_location = 2 
-limit_time = "r3600" # one hour
+# Map LinkedIn location string -> country key for per-country prompts and Slack templates (see prompts/<country>/ and templates/<country>/)
+location_to_country = {"Canada": "canada", "United%20States": "us", "Japan": "japan"}
+keywords = "software%20engineer"
+max_jobs_per_location = 2
+limit_time = "r3600"  # one hour
 
 def filter_already_seen(jobs, seen_jobs):
     filtered = []
@@ -31,7 +33,8 @@ def ask_ollama(new_jobs, seen_jobs):
                 company=job.company,
                 location=job.location,
                 summary=response['ollama_answer'],
-                link=job.url
+                link=job.url,
+                country=getattr(job, "country", None),
             )
 
             seen_jobs.add(job.id)
@@ -42,7 +45,13 @@ def ask_ollama(new_jobs, seen_jobs):
 
 def main():
     seen_jobs = load_seen_jobs()
-    all_jobs = fetch_jobs_for_locations(locations=locations, keywords=keywords, limit_time=limit_time, max_jobs_per_location=max_jobs_per_location)
+    all_jobs = fetch_jobs_for_locations(
+        locations=locations,
+        keywords=keywords,
+        limit_time=limit_time,
+        max_jobs_per_location=max_jobs_per_location,
+        location_to_country=location_to_country,
+    )
     new_jobs = filter_already_seen(all_jobs, seen_jobs)
     
     ask_ollama(new_jobs, seen_jobs)

@@ -1,10 +1,11 @@
 import re
 from bs4 import BeautifulSoup
-from logger_util import logger
+from utils.logger import logger
 from model.job import Job
 
 
 JOBS_LIMIT = 50
+
 
 def parse_job_search_list(html):
     soup = BeautifulSoup(html, "html.parser")
@@ -18,6 +19,7 @@ def parse_job_search_list(html):
         if len(jobs) == JOBS_LIMIT:
             break
     return jobs
+
 
 def _parse_job_card(li) -> Job:
     title_tag = li.select_one("h3")
@@ -34,7 +36,7 @@ def _parse_job_card(li) -> Job:
         title=title_tag.get_text(strip=True),
         url=link_tag["href"],
         company=company_tag.get_text(strip=True) if company_tag else "",
-        location=location.get_text(strip=True) if location else ""
+        location=location.get_text(strip=True) if location else "",
     )
 
 
@@ -46,10 +48,11 @@ def parse_job_applicant_and_description(html):
 
     return (number_of_applicants, job_description)
 
+
 def _parse_numeber_of_applicant(soup):
     applicant_div = soup.select_one(".topcard__flavor-row .num-applicants__caption")
     if applicant_div:
-        matches = re.findall(r'\d+', applicant_div.get_text(strip=True))
+        matches = re.findall(r"\d+", applicant_div.get_text(strip=True))
         return int(matches[-1]) if matches else None
     else:
         logger.warning(">> No applicant div")
@@ -57,7 +60,7 @@ def _parse_numeber_of_applicant(soup):
 
 
 def _parse_job_description(soup):
-    desc_div = soup.find("div", class_="description__text")  # 根据实际 class 调整
+    desc_div = soup.find("div", class_="description__text")  # Adjust class if LinkedIn markup changes
     if desc_div:
         return desc_div.get_text(separator="\n", strip=True)
     else:
