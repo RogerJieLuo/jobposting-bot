@@ -11,7 +11,6 @@ locations = ["Canada", "United%20States", "Japan"]
 # Map LinkedIn location string -> country key for per-country prompts and Slack templates (see prompts/<country>/ and templates/<country>/)
 location_to_country = {"Canada": "canada", "United%20States": "us", "Japan": "japan"}
 keywords = "software%20engineer"
-max_jobs_per_location = 2
 limit_time = "r3600"  # one hour
 # Switch LLM provider here ("ollama" or "gemini"), or set env LLM_PROVIDER.
 llm_provider = os.getenv("LLM_PROVIDER", "gemini")
@@ -111,7 +110,6 @@ def main():
         locations=locations,
         keywords=keywords,
         limit_time=limit_time,
-        max_jobs_per_location=max_jobs_per_location,
         location_to_country=location_to_country,
     )
     new_jobs = filter_already_seen(all_jobs, seen_by_country)

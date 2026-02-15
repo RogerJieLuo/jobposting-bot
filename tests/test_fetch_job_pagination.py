@@ -22,7 +22,6 @@ def test_fetch_jobs_stops_on_repeated_page_signature():
                 keywords="software%20engineer",
                 location="Japan",
                 limit_time="r3600",
-                max_jobs=10,
                 country_key="japan",
             )
     assert result == []
@@ -38,7 +37,6 @@ def test_fetch_jobs_stops_after_stuck_pages_when_ids_missing():
             keywords="software%20engineer",
             location="Japan",
             limit_time="r3600",
-            max_jobs=10,
             country_key="japan",
         )
     assert result == []

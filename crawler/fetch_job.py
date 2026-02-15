@@ -30,10 +30,10 @@ def scan_jobs(keywords, location, limit_time, start=0):
     return jobs
 
 
-def fetch_jobs(keywords, location, limit_time, max_jobs, country_key=None):
+def fetch_jobs(keywords, location, limit_time, country_key=None):
     """
-    Collect up to max_jobs unique (deduplicated) jobs per location.
-    Paginate through search results until we have enough or there are no more.
+    Collect unique (deduplicated) jobs per location.
+    Paginate through search results until stop conditions are hit.
     """
     filtered_jobs = []
     seen_listing_ids = set()  # dedupe all listed jobs within this location (even non-matching ones)
@@ -42,7 +42,7 @@ def fetch_jobs(keywords, location, limit_time, max_jobs, country_key=None):
     pages_scanned = 0
     start = 0
 
-    while len(filtered_jobs) < max_jobs:
+    while True:
         if pages_scanned >= MAX_PAGES_PER_LOCATION:
             logger.warning(
                 "Stop pagination for %s after %d pages (safety cap).",
@@ -68,8 +68,6 @@ def fetch_jobs(keywords, location, limit_time, max_jobs, country_key=None):
 
         new_listing_count = 0
         for job in page_jobs:
-            if len(filtered_jobs) >= max_jobs:
-                break
             if not job.id:
                 continue
             if job.id in seen_listing_ids:
@@ -117,12 +115,10 @@ def fetch_jobs_for_locations(
     locations,
     keywords=None,
     limit_time="r3600",
-    max_jobs_per_location=50,
     location_to_country=None,
 ):
     """
     locations: list of location strings (e.g. ["Canada", "United%20States", "Japan"]).
-    max_jobs_per_location: max unique jobs to fetch per location (paginates until reached or no more).
     location_to_country: optional dict mapping location -> country key (e.g. {"Canada": "canada", "Japan": "japan"}).
     """
     location_to_country = location_to_country or {}
@@ -134,7 +130,6 @@ def fetch_jobs_for_locations(
             location=loc,
             keywords=keywords,
             limit_time=limit_time,
-            max_jobs=max_jobs_per_location,
             country_key=country_key,
         )
         logger.info(f"Found {len(jobs)} verified unique jobs in {loc}")
