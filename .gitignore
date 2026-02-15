@@ -5,7 +5,7 @@ venv/
 htmlcov/
 *.log
 *.csv
-*.txt
+seen_jobs/*.txt
 config/
 logs/
 note.md

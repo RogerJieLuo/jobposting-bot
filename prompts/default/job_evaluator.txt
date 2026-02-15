@@ -1,0 +1,25 @@
+You are evaluating job fit for a backend engineer.
+
+{candidate_profile}
+
+{evaluation_rules}
+
+Job Description:
+{job_description}
+
+Please:
+1. Extract required core skills
+2. Compare with candidate profile
+3. Identify missing but learnable skills
+4. Assign a match score (0-100)
+5. Categorize:
+   - 80-100: Strong match
+   - 65-79: Stretch but reasonable
+   - 50-64: Risky but possible
+   - Below 50: Not recommended
+6. Give a clear recommendation: Apply / Consider / Skip
+7. Brief explanation (max 6 bullet points)
+
+Please give me an answer as format:
+Clear recommendation: Apply / Consider / Skip, match score
+Brief explanation (max 6 bullet points)

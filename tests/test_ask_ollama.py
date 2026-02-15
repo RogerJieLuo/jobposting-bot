@@ -9,6 +9,7 @@ from llm.ask_ollama import (
     load_prompt_template,
     build_prompt,
     analyze_with_ollama,
+    extract_recommendation,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -71,9 +72,17 @@ def test_analyze_with_ollama_returns_structured_response():
     job.location = "Toronto"
 
     with patch("llm.ask_ollama.ollama") as mock_ollama:
-        mock_ollama.chat.return_value = {"message": {"content": "Apply. Score 80."}}
+        mock_ollama.chat.return_value = {"message": {"content": "Clear recommendation: Apply, match score 80"}}
         result = analyze_with_ollama(job)
 
     assert result["link"] == "https://linkedin.com/jobs/1"
-    assert result["ollama_answer"] == "Apply. Score 80."
+    assert result["ollama_answer"] == "Clear recommendation: Apply, match score 80"
+    assert result["decision"] == "apply"
     mock_ollama.chat.assert_called_once()
+
+
+def test_extract_recommendation_variants():
+    assert extract_recommendation("Clear recommendation: Consider, score 72") == "consider"
+    assert extract_recommendation("Recommendation: Skip") == "skip"
+    assert extract_recommendation("I would Apply for this role.") == "apply"
+    assert extract_recommendation("No clear output") is None

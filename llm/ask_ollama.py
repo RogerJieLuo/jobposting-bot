@@ -1,4 +1,5 @@
 import ollama
+import re
 from pathlib import Path
 
 
@@ -55,7 +56,8 @@ def analyze_with_ollama(job):
         messages=messages
     )
     text = response['message']['content']
-    return {"link": job.url, "ollama_answer": text}
+    decision = extract_recommendation(text)
+    return {"link": job.url, "ollama_answer": text, "decision": decision}
     # lines = text.strip().splitlines()
     # decision, reason = None, ""
     # for line in lines:
@@ -64,3 +66,20 @@ def analyze_with_ollama(job):
     #     elif line.lower().startswith("reason:"):
     #         reason = line.split(":",1)[1].strip()
     # return {"link": job.url, "decision": decision, "reason": reason}
+
+
+def extract_recommendation(text: str):
+    if not text:
+        return None
+    m = re.search(r"clear recommendation\s*:\s*(apply|consider|skip)", text, flags=re.IGNORECASE)
+    if m:
+        return m.group(1).lower()
+
+    m = re.search(r"\brecommendation\s*:\s*(apply|consider|skip)", text, flags=re.IGNORECASE)
+    if m:
+        return m.group(1).lower()
+
+    m = re.search(r"\b(apply|consider|skip)\b", text, flags=re.IGNORECASE)
+    if m:
+        return m.group(1).lower()
+    return None

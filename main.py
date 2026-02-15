@@ -13,16 +13,20 @@ keywords = "software%20engineer"
 max_jobs_per_location = 2
 limit_time = "r3600"  # one hour
 
-def filter_already_seen(jobs, seen_jobs):
+def filter_already_seen(jobs, seen_by_country):
+    """seen_by_country: dict of country_key -> set of job IDs."""
     filtered = []
     for job in jobs:
-        job_id = job.id  
-        if job_id not in seen_jobs:
+        country = (getattr(job, "country", None) or "default").strip().lower()
+        job_id = job.id
+        if job_id and job_id not in seen_by_country.get(country, set()):
             filtered.append(job)
     return filtered
 
 
-def ask_ollama(new_jobs, seen_jobs):
+def ask_ollama(new_jobs):
+    """Run Ollama on new jobs; only persist seen job after successful Slack send."""
+    added_by_country = {}
     for job in new_jobs:
         try:
             response = analyze_with_ollama(job)
@@ -36,15 +40,18 @@ def ask_ollama(new_jobs, seen_jobs):
                 link=job.url,
                 country=getattr(job, "country", None),
             )
-
-            seen_jobs.add(job.id)
+            country = (getattr(job, "country", None) or "default").strip().lower()
+            added_by_country.setdefault(country, []).append(job.id)
+            # Persist immediately after successful Slack send to avoid duplicate resend after crashes.
+            save_seen_jobs({country: [job.id]})
         except Exception as e:
             logger.error(f"Error analyzing job {job.id}: {job.url} \n{e}")
             logger.error(traceback.format_exc())
+    return added_by_country
 
 
 def main():
-    seen_jobs = load_seen_jobs()
+    seen_by_country = load_seen_jobs()
     all_jobs = fetch_jobs_for_locations(
         locations=locations,
         keywords=keywords,
@@ -52,11 +59,10 @@ def main():
         max_jobs_per_location=max_jobs_per_location,
         location_to_country=location_to_country,
     )
-    new_jobs = filter_already_seen(all_jobs, seen_jobs)
-    
-    ask_ollama(new_jobs, seen_jobs)
-    # save_seen_jobs(seen_jobs)
-    logger.info("Job fetch & analyze done.")
+    new_jobs = filter_already_seen(all_jobs, seen_by_country)
+
+    added_by_country = ask_ollama(new_jobs)
+    logger.info("Job fetch & analyze done. sent=%d", sum(len(v) for v in added_by_country.values()))
 
 if __name__ == "__main__":
     main()

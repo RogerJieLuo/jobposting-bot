@@ -1,22 +1,23 @@
 import re
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from utils.logger import logger
 from model.job import Job
 
 
-JOBS_LIMIT = 50
+# Jobs per page (LinkedIn search returns ~25 per page). Must match fetch_job pagination.
+PAGE_SIZE = 25
 
 
 def parse_job_search_list(html):
     soup = BeautifulSoup(html, "html.parser")
     jobs = []
-
     for li in soup.select("li"):
         job = _parse_job_card(li)
         if not job:
             continue
-        jobs.append(_parse_job_card(li))
-        if len(jobs) == JOBS_LIMIT:
+        jobs.append(job)
+        if len(jobs) == PAGE_SIZE:
             break
     return jobs
 
@@ -26,18 +27,30 @@ def _parse_job_card(li) -> Job:
     company_tag = li.select_one("h4")
     link_tag = li.select_one("a")
     location = li.find("span", class_="job-search-card__location")
-    id = li.select_one("data-job-id")
 
     if not title_tag or not link_tag:
         return
 
+    job_url = link_tag.get("href", "") or ""
+    job_id = li.get("data-job-id") or link_tag.get("data-job-id") or _canonical_job_url(job_url) or ""
+
     return Job(
-        id=id.get_text(strip=True) if id else "",
+        id=job_id,
         title=title_tag.get_text(strip=True),
-        url=link_tag["href"],
+        url=job_url,
         company=company_tag.get_text(strip=True) if company_tag else "",
         location=location.get_text(strip=True) if location else "",
     )
+
+
+def _canonical_job_url(url: str) -> str:
+    """Drop query/fragment so tracking params don't break dedupe."""
+    if not url:
+        return ""
+    p = urlparse(url)
+    if not p.scheme or not p.netloc:
+        return url
+    return f"{p.scheme}://{p.netloc}{p.path}"
 
 
 def parse_job_applicant_and_description(html):

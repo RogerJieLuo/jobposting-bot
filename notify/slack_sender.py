@@ -17,6 +17,5 @@ def send_slack_job(title, company, location, summary, link, country=None):
         country=country,
     )
 
-    response = requests.post(webhook, json=payload)
-    # print(response.status_code)
-    # print(response.text)
+    response = requests.post(webhook, json=payload, timeout=10)
+    response.raise_for_status()

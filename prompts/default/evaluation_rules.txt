@@ -1,0 +1,10 @@
+Evaluation Rules:
+
+1. Do NOT reject based solely on missing non-core skills.
+2. Distinguish between:
+   - Core backend requirements
+   - Nice-to-have or secondary tools
+3. If core backend experience matches 60%+, consider it potentially suitable.
+4. Favor growth potential and transferable skills.
+5. Do not penalize heavily for specific language differences if backend principles match.
+6. Encourage stretch opportunities within reasonable range.
