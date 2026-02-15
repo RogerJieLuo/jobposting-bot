@@ -1,0 +1,10 @@
+Company Screening Rules:
+
+1. Prefer companies with stable product/business model and clear engineering ownership.
+2. Be cautious if there are strong recent signals of layoffs, severe hiring freezes, or major financial distress.
+3. Consider role quality at the company:
+   - backend/system ownership opportunity
+   - mentorship and engineering standards
+   - realistic scope and growth potential
+4. Avoid over-penalizing missing data; if evidence is mixed or limited, mark as Neutral.
+5. If company risk is high, recommendation should lean to Consider/Skip even when role skills match.

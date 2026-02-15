@@ -1,7 +1,7 @@
 """Unit tests for utils.config_loader."""
 from pathlib import Path
 from unittest.mock import patch, mock_open
-from utils.config_loader import get_project_root, load_slack_webhook
+from utils.config_loader import get_project_root, load_slack_webhook, load_gemini_api_key
 
 
 def test_get_project_root():
@@ -16,3 +16,11 @@ def test_load_slack_webhook_returns_stripped_content():
         with patch("builtins.open", mock_open(read_data=fake_webhook + "\n")):
             result = load_slack_webhook()
     assert result == fake_webhook
+
+
+def test_load_gemini_api_key_returns_stripped_content():
+    fake_key = "AIzaSyFakeKey"
+    with patch("utils.config_loader.get_project_root", return_value=Path("/fake/root")):
+        with patch("builtins.open", mock_open(read_data=fake_key + "\n")):
+            result = load_gemini_api_key()
+    assert result == fake_key

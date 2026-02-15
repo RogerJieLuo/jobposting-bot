@@ -4,33 +4,22 @@ You are evaluating job fit for a backend engineer.
 
 {evaluation_rules}
 
-Company Name:
-{company_name}
-
-Company Screening Rules:
-{company_screening_rules}
-
-Company Web Search Context:
-{company_context}
-
 Job Description:
 {job_description}
 
 Please:
 1. Extract required core skills
 2. Compare with candidate profile
-3. Evaluate company quality/risk using company screening rules and web search context
-4. Identify missing but learnable skills
-5. Assign a match score (0-100)
-6. Categorize:
+3. Identify missing but learnable skills
+4. Assign a match score (0-100)
+5. Categorize:
    - 80-100: Strong match
    - 65-79: Stretch but reasonable
    - 50-64: Risky but possible
    - Below 50: Not recommended
-7. Give a clear recommendation: Apply / Consider / Skip
-8. Brief explanation (max 6 bullet points)
+6. Give a clear recommendation: Apply / Consider / Skip
+7. Brief explanation (max 6 bullet points)
 
 Please give me an answer as format:
 Clear recommendation: Apply / Consider / Skip, match score
-Company verdict: Good / Neutral / Risky
 Brief explanation (max 6 bullet points)
