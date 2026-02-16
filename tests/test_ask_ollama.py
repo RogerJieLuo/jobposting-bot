@@ -11,7 +11,6 @@ from llm.prompt_builder import (
     build_prompt,
 )
 from llm.parsing import extract_recommendation
-from llm.providers.ollama_provider import web_search_company_context
 from llm.providers.ollama_provider import analyze as analyze_with_ollama
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -96,7 +95,7 @@ def test_analyze_with_ollama_returns_structured_response():
     job.company = "Acme"
     job.location = "Toronto"
 
-    with patch("llm.providers.ollama_provider.web_search_company_context", return_value="Company context"):
+    with patch("llm.providers.ollama_provider.OLLAMA_WEB_SEARCH_ENABLED", False):
         with patch("llm.providers.ollama_provider.ollama") as mock_ollama:
             mock_ollama.chat.return_value = {"message": {"content": "Clear recommendation: Apply, match score 80"}}
             result = analyze_with_ollama(job, include_company_screening=True)
@@ -115,37 +114,64 @@ def test_extract_recommendation_variants():
     assert extract_recommendation("No clear output") is None
 
 
-def test_web_search_company_context_formats_results():
-    fake_response = {
-        "results": [
-            {"title": "Acme Company", "link": "https://acme.example", "content": "A stable engineering company."}
-        ]
-    }
-    with patch("llm.providers.ollama_provider.ollama.Client") as mock_client:
-        mock_client.return_value.web_search.return_value = fake_response
-        out = web_search_company_context("Acme", max_results=1)
-    assert "Acme Company" in out
-    assert "https://acme.example" in out
-
-
-def test_web_search_company_context_handles_failure():
-    with patch("llm.providers.ollama_provider.ollama.Client") as mock_client:
-        mock_client.return_value.web_search.side_effect = ValueError("missing api key")
-        out = web_search_company_context("Acme", max_results=1)
-    assert "Web search unavailable" in out
-
-
-def test_analyze_with_ollama_without_company_screening_skips_web_search():
+def test_analyze_with_ollama_without_company_screening_works():
     job = MagicMock()
     job.description = "Backend Java role."
     job.url = "https://linkedin.com/jobs/1"
     job.country = "default"
     job.company = "Acme"
+    job.title = "Software Engineer"
+    job.location = "Vancouver"
 
-    with patch("llm.providers.ollama_provider.web_search_company_context") as mock_web:
+    with patch("llm.providers.ollama_provider.OLLAMA_WEB_SEARCH_ENABLED", False):
         with patch("llm.providers.ollama_provider.ollama") as mock_ollama:
             mock_ollama.chat.return_value = {"message": {"content": "Clear recommendation: Consider, match score 70"}}
             result = analyze_with_ollama(job, include_company_screening=False)
-
-    mock_web.assert_not_called()
     assert result["decision"] == "consider"
+
+
+def test_analyze_with_ollama_web_search_mode_uses_web_search_only():
+    job = MagicMock()
+    job.description = "Backend Java role."
+    job.url = "https://linkedin.com/jobs/1"
+    job.country = "default"
+    job.company = "Acme"
+    job.title = "Software Engineer"
+    job.location = "Vancouver"
+
+    fake_response = {
+        "results": [
+            {
+                "title": "Acme careers",
+                "link": "https://example.com/acme",
+                "content": "Hiring for backend engineer in Vancouver.",
+            }
+        ]
+    }
+    with patch("llm.providers.ollama_provider.OLLAMA_WEB_SEARCH_ENABLED", True):
+        with patch("llm.providers.ollama_provider.load_ollama_api_key", return_value="ollama-key"):
+            with patch("llm.providers.ollama_provider.ollama.Client") as mock_client:
+                with patch("llm.providers.ollama_provider.ollama.chat") as mock_chat:
+                    mock_client.return_value.web_search.return_value = fake_response
+                    result = analyze_with_ollama(job, include_company_screening=False)
+    mock_client.return_value.web_search.assert_called_once()
+    mock_chat.assert_not_called()
+    assert "Acme careers" in result["answer"]
+
+
+def test_analyze_with_ollama_web_search_mode_requires_api_key():
+    job = MagicMock()
+    job.description = "Backend Java role."
+    job.url = "https://linkedin.com/jobs/1"
+    job.country = "default"
+    job.company = "Acme"
+    job.title = "Software Engineer"
+    job.location = "Vancouver"
+
+    with patch("llm.providers.ollama_provider.OLLAMA_WEB_SEARCH_ENABLED", True):
+        with patch("llm.providers.ollama_provider.load_ollama_api_key", return_value=""):
+            try:
+                analyze_with_ollama(job, include_company_screening=False)
+                assert False, "Expected ValueError"
+            except ValueError as e:
+                assert "ollama_api_key.txt" in str(e)

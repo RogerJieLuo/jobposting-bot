@@ -8,6 +8,7 @@ htmlcov/
 seen_jobs/*.txt
 config/
 logs/
+test_scripts/
 note.md
 test.* 
 tmp/

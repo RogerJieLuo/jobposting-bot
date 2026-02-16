@@ -4,6 +4,9 @@ You are evaluating job fit for a backend engineer.
 
 {evaluation_rules}
 
+Web Search Context (job + company):
+{company_context}
+
 Job Description:
 {job_description}
 

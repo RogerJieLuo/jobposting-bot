@@ -18,14 +18,14 @@ def get_default_provider() -> str:
     return normalize_provider(os.getenv("LLM_PROVIDER", "ollama"))
 
 
-def analyze_job(job, provider: str, include_company_screening=True):
+def analyze_job(job, provider: str, include_company_screening):
     p = normalize_provider(provider)
     if p == "ollama":
         return analyze_with_ollama(job, include_company_screening=include_company_screening)
     return analyze_with_gemini(job, include_company_screening=include_company_screening)
 
 
-def analyze_jobs(jobs, provider: str, include_company_screening=False):
+def analyze_jobs(jobs, provider: str, include_company_screening):
     p = normalize_provider(provider)
     if p == "gemini":
         grouped = {}

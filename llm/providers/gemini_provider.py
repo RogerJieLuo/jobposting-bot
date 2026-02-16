@@ -15,7 +15,7 @@ from llm.parsing import extract_recommendation
 from utils.config_loader import load_gemini_api_key
 
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-pro")
 MAX_BATCH_JOBS = int(os.getenv("GEMINI_BATCH_MAX_JOBS", "12"))
 MAX_BATCH_PROMPT_CHARS = int(os.getenv("GEMINI_BATCH_MAX_PROMPT_CHARS", "60000"))
 
@@ -29,7 +29,7 @@ def _build_company_context(company_name: str) -> str:
     )
 
 
-def analyze(job, include_company_screening=True):
+def analyze(job, include_company_screening):
     api_key = load_gemini_api_key()
     if not api_key:
         raise ValueError("Gemini API key is empty. Please set config/gemini_api_key.txt")
@@ -114,7 +114,7 @@ def _load_api_key() -> str:
     return api_key
 
 
-def _build_prompt_for_jobs(jobs, include_company_screening=True) -> str:
+def _build_prompt_for_jobs(jobs, include_company_screening) -> str:
     country = (getattr(jobs[0], "country", None) or "default").strip().lower()
     profile = load_profile(country)
     rules = load_rules(country)
@@ -188,7 +188,7 @@ def _map_items_to_results(items, jobs):
     return by_id
 
 
-def _chunk_jobs(jobs, include_company_screening=True):
+def _chunk_jobs(jobs, include_company_screening):
     chunks = []
     current = []
     for job in jobs:
@@ -214,7 +214,7 @@ def _chunk_jobs(jobs, include_company_screening=True):
     return chunks
 
 
-def analyze_batch(jobs, include_company_screening=True):
+def analyze_batch(jobs, include_company_screening):
     if not jobs:
         return {}
     api_key = _load_api_key()

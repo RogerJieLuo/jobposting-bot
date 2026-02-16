@@ -1,5 +1,6 @@
 import traceback
 import os
+import sys
 from utils.logger import logger
 from utils.seen_jobs import save_seen_jobs, load_seen_jobs
 from crawler.fetch_job import fetch_jobs_for_locations
@@ -127,4 +128,8 @@ def main():
     )
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Job posting app failed: {e}")
+        sys.exit(0)

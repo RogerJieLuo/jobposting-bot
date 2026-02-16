@@ -7,8 +7,12 @@ Automatically crawls LinkedIn for Software Engineer jobs posted within the last 
 ## 1. Ollama setup
 
 - Install [Ollama](https://ollama.com) and pull a model locally (e.g. `ollama pull qwen3:8b`).
-- Optional web search for company analysis requires `OLLAMA_API_KEY` in environment.
-- You can set `OLLAMA_MODEL` (default: `qwen3:8b`) and `OLLAMA_WEB_SEARCH_MAX_RESULTS` (default: `3`).
+- You can set `OLLAMA_MODEL` (default: `qwen3:8b`).
+- Ollama answer mode toggle:
+  - `OLLAMA_WEB_SEARCH_ENABLED=0` (default): use local model (`ollama.chat`).
+  - `OLLAMA_WEB_SEARCH_ENABLED=1`: use `ollama web_search` to answer the prompt.
+- Optional: `OLLAMA_WEB_SEARCH_MAX_RESULTS` (default: `5`).
+- If web search mode is enabled, set `config/ollama_api_key.txt` (one line API key).
 - Prompt files live in `prompts/default/` (`profile.txt`, `evaluation_rules.txt`, `company_screening_rules.txt`, `job_evaluator.txt`); edit as needed. For per-country prompts use `prompts/<country>/`; see **Per-country config** below.
 
 ## 1.1 Gemini setup (free API)

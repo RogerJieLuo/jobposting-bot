@@ -17,3 +17,11 @@ def load_gemini_api_key():
 
     with open(config_path, "r") as f:
         return f.read().strip()
+
+
+def load_ollama_api_key():
+    root = get_project_root()
+    config_path = root / "config" / "ollama_api_key.txt"
+
+    with open(config_path, "r") as f:
+        return f.read().strip()

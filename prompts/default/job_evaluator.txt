@@ -10,7 +10,7 @@ Company Name:
 Company Screening Rules:
 {company_screening_rules}
 
-Company Web Search Context:
+Web Search Context (job + company):
 {company_context}
 
 Job Description:
