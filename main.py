@@ -22,6 +22,13 @@ enable_company_screening = os.getenv("ENABLE_COMPANY_SCREENING", "1").strip().lo
     "yes",
     "on",
 }
+# If enabled, fallback to Ollama when Gemini fails. ("1"=on, "0"=off)
+allow_ollama_fallback = os.getenv("ALLOW_OLLAMA_FALLBACK", "1").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 def filter_already_seen(jobs, seen_by_country):
     """seen_by_country: dict of country_key -> set of job IDs."""
@@ -36,6 +43,13 @@ def filter_already_seen(jobs, seen_by_country):
 
 def _country_key(job):
     return (getattr(job, "country", None) or "default").strip().lower()
+
+
+def _group_jobs_by_country(jobs):
+    grouped = {}
+    for job in jobs:
+        grouped.setdefault(_country_key(job), []).append(job)
+    return grouped
 
 
 def _send_and_mark_seen(job, answer, added_by_country):
@@ -53,30 +67,67 @@ def _send_and_mark_seen(job, answer, added_by_country):
 
 
 def _process_gemini_batch(new_jobs, provider, include_company_screening, added_by_country):
-    try:
-        responses_by_id = analyze_jobs(
-            new_jobs,
-            provider=provider,
-            include_company_screening=include_company_screening,
-        )
-    except Exception as e:
-        logger.error(f"Batch analysis failed via {provider}: {e}")
-        logger.error(traceback.format_exc())
-        return
+    logger.info(
+        "LLM analyze start: provider=%s mode=batch jobs=%d",
+        provider,
+        len(new_jobs),
+    )
+    failed_jobs = []
+    grouped_jobs = _group_jobs_by_country(new_jobs)
 
-    for job in new_jobs:
+    grouped_items = list(grouped_jobs.items())
+    for idx, (country, country_jobs) in enumerate(grouped_items):
         try:
-            response = responses_by_id.get(job.id)
-            if not response:
-                logger.warning("No Gemini batch result for job id=%s", job.id)
-                continue
-            _send_and_mark_seen(job, response["answer"], added_by_country)
+            responses_by_id = analyze_jobs(
+                country_jobs,
+                provider=provider,
+                include_company_screening=include_company_screening,
+            )
+            logger.info(
+                "LLM analyze success: provider=%s mode=batch country=%s jobs=%d",
+                provider,
+                country,
+                len(country_jobs),
+            )
         except Exception as e:
-            logger.error(f"Error sending Gemini batch job {job.id}: {job.url} \n{e}")
+            logger.error(
+                "Batch analysis failed via %s for country=%s jobs=%d: %s",
+                provider,
+                country,
+                len(country_jobs),
+                e,
+            )
             logger.error(traceback.format_exc())
+            failed_jobs.extend(country_jobs)
+            # Fail fast: once Gemini fails for one country, hand all remaining jobs to fallback provider.
+            for _, remaining_jobs in grouped_items[idx + 1 :]:
+                failed_jobs.extend(remaining_jobs)
+            logger.warning(
+                "Gemini failed once; skipping remaining Gemini countries and deferring %d jobs to fallback.",
+                len(failed_jobs),
+            )
+            break
+
+        for job in country_jobs:
+            try:
+                response = responses_by_id.get(job.id)
+                if not response:
+                    logger.warning("No Gemini batch result for job id=%s", job.id)
+                    failed_jobs.append(job)
+                    continue
+                _send_and_mark_seen(job, response["answer"], added_by_country)
+            except Exception as e:
+                logger.error(f"Error sending Gemini batch job {job.id}: {job.url} \n{e}")
+                logger.error(traceback.format_exc())
+    return failed_jobs
 
 
 def _process_single_job(new_jobs, provider, include_company_screening, added_by_country):
+    logger.info(
+        "LLM analyze start: provider=%s mode=single jobs=%d",
+        provider,
+        len(new_jobs),
+    )
     for job in new_jobs:
         try:
             response = analyze_job(
@@ -84,11 +135,18 @@ def _process_single_job(new_jobs, provider, include_company_screening, added_by_
                 provider=provider,
                 include_company_screening=include_company_screening,
             )
-            if not response:
-                continue
-            _send_and_mark_seen(job, response["answer"], added_by_country)
         except Exception as e:
             logger.error(f"Error analyzing job {job.id} via {provider}: {job.url} \n{e}")
+            logger.error(traceback.format_exc())
+            continue
+
+        if not response:
+            continue
+
+        try:
+            _send_and_mark_seen(job, response["answer"], added_by_country)
+        except Exception as e:
+            logger.error(f"Error sending job {job.id} via {provider}: {job.url} \n{e}")
             logger.error(traceback.format_exc())
 
 
@@ -96,9 +154,38 @@ def ask_llm(new_jobs, provider, include_company_screening=True):
     """Run selected LLM on new jobs; only persist seen job after successful Slack send."""
     added_by_country = {}
     provider_key = (provider or "").strip().lower()
+    logger.info(
+        "LLM selection: primary=%s allow_ollama_fallback=%s jobs=%d",
+        provider_key,
+        allow_ollama_fallback,
+        len(new_jobs),
+    )
 
     if provider_key == "gemini":
-        _process_gemini_batch(new_jobs, provider, include_company_screening, added_by_country)
+        failed_jobs = _process_gemini_batch(
+            new_jobs,
+            provider,
+            include_company_screening,
+            added_by_country,
+        )
+        if failed_jobs:
+            if allow_ollama_fallback:
+                logger.warning(
+                    "Gemini failed for %d jobs; fallback to Ollama is enabled (ALLOW_OLLAMA_FALLBACK=1).",
+                    len(failed_jobs),
+                )
+                logger.info("LLM selection: fallback provider=ollama")
+                _process_single_job(
+                    failed_jobs,
+                    provider="ollama",
+                    include_company_screening=include_company_screening,
+                    added_by_country=added_by_country,
+                )
+            else:
+                logger.warning(
+                    "Gemini failed for %d jobs; fallback to Ollama is disabled (ALLOW_OLLAMA_FALLBACK=0).",
+                    len(failed_jobs),
+                )
         return added_by_country
 
     _process_single_job(new_jobs, provider, include_company_screening, added_by_country)

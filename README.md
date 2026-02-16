@@ -26,6 +26,9 @@ Automatically crawls LinkedIn for Software Engineer jobs posted within the last 
 
 - In `main.py`, set `llm_provider = "ollama"` or `llm_provider = "gemini"`.
 - You can also override with env var `LLM_PROVIDER=ollama|gemini`.
+- Fallback toggle (when `LLM_PROVIDER=gemini`):
+  - `ALLOW_OLLAMA_FALLBACK=1` (default): if Gemini fails, retry each job with Ollama.
+  - `ALLOW_OLLAMA_FALLBACK=0`: if Gemini fails, do not retry with Ollama.
 - Company screening toggle:
   - `ENABLE_COMPANY_SCREENING=1` (default): include company screening rules + company context in prompt.
   - `ENABLE_COMPANY_SCREENING=0`: use original prompt flow without company screening section.
