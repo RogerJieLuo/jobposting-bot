@@ -8,6 +8,7 @@ from llm.prompt_builder import (
 )
 from llm.parsing import extract_recommendation
 from utils.config_loader import load_ollama_api_key
+from utils.logger import logger
 
 
 DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
@@ -45,16 +46,27 @@ def _build_web_search_query(job, prompt: str) -> str:
 
 
 def _web_search_answer(job, prompt: str) -> str:
+    logger.info(
+        "Ollama analyze mode=web_search model=%s max_results=%d job_id=%s",
+        DEFAULT_MODEL,
+        OLLAMA_WEB_SEARCH_MAX_RESULTS,
+        getattr(job, "id", None),
+    )
     query = _build_web_search_query(job, prompt)
     api_key = load_ollama_api_key()
     if not api_key:
-        raise ValueError("Ollama API key is empty. Please set config/ollama_api_key.txt")
+        raise ValueError("Ollama API key is empty. Set OLLAMA_API_KEY or config/ollama_api_key.txt")
     client = ollama.Client(
         host='https://ollama.com', 
         headers={'Authorization': f'Bearer {api_key}'}
     )
     response = client.web_search(query=query, max_results=OLLAMA_WEB_SEARCH_MAX_RESULTS)
     results = _to_results(response)
+    logger.info(
+        "Ollama web_search completed results=%d job_id=%s",
+        len(results),
+        getattr(job, "id", None),
+    )
     if not results:
         return "No web search results."
     lines = []
@@ -75,6 +87,11 @@ def _web_search_answer(job, prompt: str) -> str:
 
 
 def _local_chat(job, prompt: str):
+    logger.info(
+        "Ollama analyze mode=local_chat model=%s job_id=%s",
+        DEFAULT_MODEL,
+        getattr(job, "id", None),
+    )
     messages = [
         {
             "role": "system",
@@ -92,6 +109,11 @@ def _local_chat(job, prompt: str):
     }
 
 def analyze(job, include_company_screening=True):
+    logger.info(
+        "Ollama analyze start web_search_enabled=%s job_id=%s",
+        OLLAMA_WEB_SEARCH_ENABLED,
+        getattr(job, "id", None),
+    )
     country = getattr(job, "country", None) or "default"
     profile = load_profile(country)
     rules = load_rules(country)

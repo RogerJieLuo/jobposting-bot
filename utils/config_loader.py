@@ -1,27 +1,38 @@
 from pathlib import Path
+import os
 
 def get_project_root():
     return Path(__file__).resolve().parent.parent
 
-def load_slack_webhook():
-    root = get_project_root()
-    config_path = root / "config" / "slack_webhook.txt"
 
+def _load_secret(env_names, config_filename):
+    for env_name in env_names:
+        value = os.getenv(env_name, "").strip()
+        if value:
+            return value
+
+    root = get_project_root()
+    config_path = root / "config" / config_filename
     with open(config_path, "r") as f:
         return f.read().strip()
+
+
+def load_slack_webhook():
+    return _load_secret(
+        env_names=("SLACK_WEBHOOK_URL", "SLACK_WEBHOOK"),
+        config_filename="slack_webhook.txt",
+    )
 
 
 def load_gemini_api_key():
-    root = get_project_root()
-    config_path = root / "config" / "gemini_api_key.txt"
-
-    with open(config_path, "r") as f:
-        return f.read().strip()
+    return _load_secret(
+        env_names=("GEMINI_API_KEY",),
+        config_filename="gemini_api_key.txt",
+    )
 
 
 def load_ollama_api_key():
-    root = get_project_root()
-    config_path = root / "config" / "ollama_api_key.txt"
-
-    with open(config_path, "r") as f:
-        return f.read().strip()
+    return _load_secret(
+        env_names=("OLLAMA_API_KEY",),
+        config_filename="ollama_api_key.txt",
+    )

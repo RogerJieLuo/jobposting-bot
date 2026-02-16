@@ -32,7 +32,7 @@ def _build_company_context(company_name: str) -> str:
 def analyze(job, include_company_screening):
     api_key = load_gemini_api_key()
     if not api_key:
-        raise ValueError("Gemini API key is empty. Please set config/gemini_api_key.txt")
+        raise ValueError("Gemini API key is empty. Set GEMINI_API_KEY or config/gemini_api_key.txt")
 
     country = getattr(job, "country", None) or "default"
     profile = load_profile(country)
@@ -110,7 +110,7 @@ def _build_job_block(job) -> str:
 def _load_api_key() -> str:
     api_key = load_gemini_api_key()
     if not api_key:
-        raise ValueError("Gemini API key is empty. Please set config/gemini_api_key.txt")
+        raise ValueError("Gemini API key is empty. Set GEMINI_API_KEY or config/gemini_api_key.txt")
     return api_key
 
 

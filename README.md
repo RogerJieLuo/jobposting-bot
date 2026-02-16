@@ -12,13 +12,17 @@ Automatically crawls LinkedIn for Software Engineer jobs posted within the last 
   - `OLLAMA_WEB_SEARCH_ENABLED=0` (default): use local model (`ollama.chat`).
   - `OLLAMA_WEB_SEARCH_ENABLED=1`: use `ollama web_search` to answer the prompt.
 - Optional: `OLLAMA_WEB_SEARCH_MAX_RESULTS` (default: `5`).
-- If web search mode is enabled, set `config/ollama_api_key.txt` (one line API key).
+- If web search mode is enabled, set API key by either:
+  - env var `OLLAMA_API_KEY` (recommended for GitHub Actions), or
+  - file `config/ollama_api_key.txt` (one line API key).
 - Prompt files live in `prompts/default/` (`profile.txt`, `evaluation_rules.txt`, `company_screening_rules.txt`, `job_evaluator.txt`); edit as needed. For per-country prompts use `prompts/<country>/`; see **Per-country config** below.
 
 ## 1.1 Gemini setup (free API)
 
 - Create an API key in Google AI Studio.
-- Add file `config/gemini_api_key.txt` and put the key in one line.
+- Set API key by either:
+  - env var `GEMINI_API_KEY` (recommended for GitHub Actions), or
+  - file `config/gemini_api_key.txt` (one line).
 - Optional:
   - `GEMINI_MODEL` (default: `gemini-2.5-flash`)
 
@@ -42,7 +46,26 @@ Automatically crawls LinkedIn for Software Engineer jobs posted within the last 
 
 - Create a `config/` directory in the project and add a file `config/slack_webhook.txt`.
 - Put your Slack Incoming Webhook URL in that file (one line, no extra spaces).
+- Or set env var `SLACK_WEBHOOK_URL` (recommended for GitHub Actions).
 - The notification template is at `templates/default/slack_job_template.json`; override per country with `templates/<country>/`.
+
+## GitHub Actions secrets
+
+For scheduled runs in GitHub Actions, add these repository secrets:
+
+- Required:
+  - `SLACK_WEBHOOK_URL`
+  - `GEMINI_API_KEY` (if using Gemini as primary provider)
+- Required only in specific modes:
+  - `OLLAMA_API_KEY` (only when `OLLAMA_WEB_SEARCH_ENABLED=1`)
+- Optional runtime toggles (can be Actions env vars, usually not secrets):
+  - `LLM_PROVIDER`
+  - `ALLOW_OLLAMA_FALLBACK`
+  - `ENABLE_COMPANY_SCREENING`
+  - `GEMINI_MODEL`
+  - `OLLAMA_MODEL`
+  - `OLLAMA_WEB_SEARCH_ENABLED`
+  - `OLLAMA_WEB_SEARCH_MAX_RESULTS`
 
 ---
 

@@ -1,4 +1,5 @@
 """Unit tests for utils.config_loader."""
+import os
 from pathlib import Path
 from unittest.mock import patch, mock_open
 from utils.config_loader import (
@@ -37,3 +38,27 @@ def test_load_ollama_api_key_returns_stripped_content():
         with patch("builtins.open", mock_open(read_data=fake_key + "\n")):
             result = load_ollama_api_key()
     assert result == fake_key
+
+
+def test_load_slack_webhook_uses_env_first():
+    with patch.dict(os.environ, {"SLACK_WEBHOOK_URL": "https://hooks.slack.com/services/from/env"}, clear=False):
+        with patch("builtins.open") as mock_file:
+            result = load_slack_webhook()
+    assert result == "https://hooks.slack.com/services/from/env"
+    mock_file.assert_not_called()
+
+
+def test_load_gemini_api_key_uses_env_first():
+    with patch.dict(os.environ, {"GEMINI_API_KEY": "env-gemini-key"}, clear=False):
+        with patch("builtins.open") as mock_file:
+            result = load_gemini_api_key()
+    assert result == "env-gemini-key"
+    mock_file.assert_not_called()
+
+
+def test_load_ollama_api_key_uses_env_first():
+    with patch.dict(os.environ, {"OLLAMA_API_KEY": "env-ollama-key"}, clear=False):
+        with patch("builtins.open") as mock_file:
+            result = load_ollama_api_key()
+    assert result == "env-ollama-key"
+    mock_file.assert_not_called()
