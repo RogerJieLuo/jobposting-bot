@@ -36,3 +36,17 @@ def load_ollama_api_key():
         env_names=("OLLAMA_API_KEY",),
         config_filename="ollama_api_key.txt",
     )
+
+
+def load_supabase_url():
+    return _load_secret(
+        env_names=("SUPABASE_URL",),
+        config_filename="supabase_url.txt",
+    )
+
+
+def load_supabase_service_role_key():
+    return _load_secret(
+        env_names=("SUPABASE_SERVICE_ROLE_KEY",),
+        config_filename="supabase_service_role_key.txt",
+    )

@@ -12,7 +12,11 @@ def test_ask_llm_sends_apply_and_persists_immediately():
                 out = ask_llm([job], provider="ollama", include_company_screening=False)
     mock_analyze.assert_called_once_with(job, provider="ollama", include_company_screening=False)
     mock_send.assert_called_once()
-    mock_save.assert_called_once_with({"us": ["id-1"]})
+    mock_save.assert_called_once()
+    payload = mock_save.call_args.args[0]
+    assert payload["us"][0]["job_id"] == "id-1"
+    assert payload["us"][0]["url"] == job.url
+    assert payload["us"][0]["job_title"] == job.title
     assert out == {"us": ["id-1"]}
 
 
@@ -23,7 +27,10 @@ def test_ask_llm_sends_skip_and_persists_after_success():
             with patch("main.save_seen_jobs") as mock_save:
                 out = ask_llm([job], provider="gemini")
     mock_send.assert_called_once()
-    mock_save.assert_called_once_with({"us": ["id-2"]})
+    mock_save.assert_called_once()
+    payload = mock_save.call_args.args[0]
+    assert payload["us"][0]["job_id"] == "id-2"
+    assert payload["us"][0]["url"] == job.url
     assert out == {"us": ["id-2"]}
 
 
@@ -34,7 +41,10 @@ def test_ask_llm_sends_unknown_decision_and_persists_after_success():
             with patch("main.save_seen_jobs") as mock_save:
                 out = ask_llm([job], provider="ollama")
     mock_send.assert_called_once()
-    mock_save.assert_called_once_with({"us": ["id-3"]})
+    mock_save.assert_called_once()
+    payload = mock_save.call_args.args[0]
+    assert payload["us"][0]["job_id"] == "id-3"
+    assert payload["us"][0]["url"] == job.url
     assert out == {"us": ["id-3"]}
 
 
@@ -69,7 +79,10 @@ def test_ask_llm_gemini_failure_falls_back_to_ollama_when_enabled():
                         out = ask_llm([job], provider="gemini", include_company_screening=False)
     mock_single.assert_called_once_with(job, provider="ollama", include_company_screening=False)
     mock_send.assert_called_once()
-    mock_save.assert_called_once_with({"us": ["id-10"]})
+    mock_save.assert_called_once()
+    payload = mock_save.call_args.args[0]
+    assert payload["us"][0]["job_id"] == "id-10"
+    assert payload["us"][0]["url"] == job.url
     assert out == {"us": ["id-10"]}
 
 

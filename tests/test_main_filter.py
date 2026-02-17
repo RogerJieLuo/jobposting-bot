@@ -28,3 +28,9 @@ def test_filter_already_seen_returns_empty_when_all_seen():
     seen_by_country = {"japan": {"x"}}
     result = filter_already_seen(jobs, seen_by_country)
     assert result == []
+
+
+def test_filter_already_seen_respects_default_global_seen():
+    j1 = sample_job(job_id="global-id", country="us")
+    result = filter_already_seen([j1], {"default": {"global-id"}})
+    assert result == []

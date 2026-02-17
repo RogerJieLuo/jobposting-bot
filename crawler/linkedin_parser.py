@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 from utils.logger import logger
 from model.job import Job
@@ -31,8 +31,14 @@ def _parse_job_card(li) -> Job:
     if not title_tag or not link_tag:
         return
 
-    job_url = link_tag.get("href", "") or ""
-    job_id = li.get("data-job-id") or link_tag.get("data-job-id") or _canonical_job_url(job_url) or ""
+    raw_job_url = link_tag.get("href", "") or ""
+    job_url = _canonical_job_url(raw_job_url)
+    job_id = (
+        li.get("data-job-id")
+        or link_tag.get("data-job-id")
+        or _extract_job_id(raw_job_url)
+        or ""
+    )
 
     return Job(
         id=job_id,
@@ -51,6 +57,28 @@ def _canonical_job_url(url: str) -> str:
     if not p.scheme or not p.netloc:
         return url
     return f"{p.scheme}://{p.netloc}{p.path}"
+
+
+def _extract_job_id(url: str) -> str:
+    """Extract numeric LinkedIn job id from URL when data-job-id is absent."""
+    if not url:
+        return ""
+    parsed = urlparse(url)
+    path = (parsed.path or "").rstrip("/")
+    # Common patterns:
+    # /jobs/view/1234567890/
+    # /jobs/view/software-engineer-1234567890/
+    m = re.search(r"/jobs/view/(?:[^/]*-)?(\d+)$", path)
+    if m:
+        return m.group(1)
+    m = re.search(r"/jobs/view/(\d+)", path)
+    if m:
+        return m.group(1)
+    q = parse_qs(parsed.query or "")
+    vals = q.get("currentJobId") or q.get("jobId") or []
+    if vals and vals[0].strip().isdigit():
+        return vals[0].strip()
+    return ""
 
 
 def parse_job_applicant_and_description(html):

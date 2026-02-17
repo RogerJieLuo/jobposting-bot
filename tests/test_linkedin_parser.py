@@ -1,5 +1,5 @@
 """Unit tests for crawler.linkedin_parser."""
-from crawler.linkedin_parser import parse_job_search_list, _canonical_job_url
+from crawler.linkedin_parser import parse_job_search_list, _canonical_job_url, _extract_job_id
 
 
 def test_canonical_job_url_drops_query_and_fragment():
@@ -7,7 +7,7 @@ def test_canonical_job_url_drops_query_and_fragment():
     assert _canonical_job_url(url) == "https://www.linkedin.com/jobs/view/123/"
 
 
-def test_parse_job_search_list_uses_canonical_url_as_fallback_id():
+def test_parse_job_search_list_extracts_numeric_id_from_url_when_data_job_id_missing():
     html = """
     <ul>
       <li>
@@ -20,4 +20,10 @@ def test_parse_job_search_list_uses_canonical_url_as_fallback_id():
     """
     jobs = parse_job_search_list(html)
     assert len(jobs) == 1
-    assert jobs[0].id == "https://www.linkedin.com/jobs/view/999/"
+    assert jobs[0].id == "999"
+    assert jobs[0].url == "https://www.linkedin.com/jobs/view/999/"
+
+
+def test_extract_job_id_supports_slug_path():
+    url = "https://www.linkedin.com/jobs/view/software-engineer-ii-1234567890?trackingId=abc"
+    assert _extract_job_id(url) == "1234567890"

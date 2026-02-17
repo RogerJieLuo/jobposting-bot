@@ -2,7 +2,7 @@ import traceback
 import os
 import sys
 from utils.logger import logger
-from utils.seen_jobs import save_seen_jobs, load_seen_jobs
+from utils.seen_jobs import save_seen_jobs, get_seen_job_ids_for_candidates
 from crawler.fetch_job import fetch_jobs_for_locations
 from llm.service import analyze_job, analyze_jobs
 from notify.slack_sender import send_slack_job
@@ -33,10 +33,12 @@ allow_ollama_fallback = os.getenv("ALLOW_OLLAMA_FALLBACK", "1").strip().lower() 
 def filter_already_seen(jobs, seen_by_country):
     """seen_by_country: dict of country_key -> set of job IDs."""
     filtered = []
+    global_seen = seen_by_country.get("default", set())
     for job in jobs:
         country = (getattr(job, "country", None) or "default").strip().lower()
         job_id = job.id
-        if job_id and job_id not in seen_by_country.get(country, set()):
+        country_seen = seen_by_country.get(country, set())
+        if job_id and job_id not in country_seen and job_id not in global_seen:
             filtered.append(job)
     return filtered
 
@@ -52,7 +54,19 @@ def _group_jobs_by_country(jobs):
     return grouped
 
 
-def _send_and_mark_seen(job, answer, added_by_country):
+def _build_seen_rank_payload(response):
+    if not isinstance(response, dict):
+        return {}
+    rank = {}
+    for key in ("provider", "decision", "score", "rank", "recommendation"):
+        value = response.get(key)
+        if value is not None:
+            rank[key] = value
+    return rank
+
+
+def _send_and_mark_seen(job, response, added_by_country):
+    answer = response["answer"]
     send_slack_job(
         title=job.title,
         company=job.company,
@@ -63,7 +77,21 @@ def _send_and_mark_seen(job, answer, added_by_country):
     )
     country = _country_key(job)
     added_by_country.setdefault(country, []).append(job.id)
-    save_seen_jobs({country: [job.id]})
+    save_seen_jobs(
+        {
+            country: [
+                {
+                    "job_title": job.title,
+                    "job_id": str(job.id),
+                    "url": job.url,
+                    "company": job.company,
+                    "location": job.location,
+                    "job_description": job.description,
+                    "rank": _build_seen_rank_payload(response),
+                }
+            ]
+        }
+    )
 
 
 def _process_gemini_batch(new_jobs, provider, include_company_screening, added_by_country):
@@ -115,7 +143,7 @@ def _process_gemini_batch(new_jobs, provider, include_company_screening, added_b
                     logger.warning("No Gemini batch result for job id=%s", job.id)
                     failed_jobs.append(job)
                     continue
-                _send_and_mark_seen(job, response["answer"], added_by_country)
+                _send_and_mark_seen(job, response, added_by_country)
             except Exception as e:
                 logger.error(f"Error sending Gemini batch job {job.id}: {job.url} \n{e}")
                 logger.error(traceback.format_exc())
@@ -144,7 +172,7 @@ def _process_single_job(new_jobs, provider, include_company_screening, added_by_
             continue
 
         try:
-            _send_and_mark_seen(job, response["answer"], added_by_country)
+            _send_and_mark_seen(job, response, added_by_country)
         except Exception as e:
             logger.error(f"Error sending job {job.id} via {provider}: {job.url} \n{e}")
             logger.error(traceback.format_exc())
@@ -193,14 +221,21 @@ def ask_llm(new_jobs, provider, include_company_screening=True):
 
 
 def main():
-    seen_by_country = load_seen_jobs()
     all_jobs = fetch_jobs_for_locations(
         locations=locations,
         keywords=keywords,
         limit_time=limit_time,
         location_to_country=location_to_country,
     )
-    new_jobs = filter_already_seen(all_jobs, seen_by_country)
+    candidate_job_ids = [str(job.id) for job in all_jobs if getattr(job, "id", None)]
+    seen_job_ids = get_seen_job_ids_for_candidates(candidate_job_ids)
+    new_jobs = [job for job in all_jobs if job.id and str(job.id) not in seen_job_ids]
+    logger.info(
+        "Dedup result: total=%d seen=%d new=%d",
+        len(all_jobs),
+        len(seen_job_ids),
+        len(new_jobs),
+    )
 
     added_by_country = ask_llm(
         new_jobs,

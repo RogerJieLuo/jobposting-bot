@@ -49,6 +49,28 @@ Automatically crawls LinkedIn for Software Engineer jobs posted within the last 
 - Or set env var `SLACK_WEBHOOK_URL` (recommended for GitHub Actions).
 - The notification template is at `templates/default/slack_job_template.json`; override per country with `templates/<country>/`.
 
+## 2.1 Seen jobs storage (Supabase + fallback)
+
+- Seen-job dedup now supports Supabase first, with local file fallback.
+- Configure Supabase via env vars:
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - Optional: `SUPABASE_SEEN_JOBS_TABLE` (default: `seen_jobs`)
+- Or configure Supabase via files under `config/`:
+  - `config/supabase_url.txt`
+  - `config/supabase_service_role_key.txt`
+- If Supabase env vars are missing, or Supabase read/write fails, app automatically falls back to local files under `seen_jobs/*.txt`.
+- Recommended Supabase table schema:
+  - `job_id` (text primary key)
+  - `job_title` (text)
+  - `url` (text, unique)
+  - `company` (text)
+  - `location` (text)
+  - `update_at` (timestamptz)
+  - `create_at` (timestamptz)
+  - `job_description` (text)
+  - `rank` (json/jsonb)
+
 ## GitHub Actions secrets
 
 For scheduled runs in GitHub Actions, add these repository secrets:
@@ -56,6 +78,8 @@ For scheduled runs in GitHub Actions, add these repository secrets:
 - Required:
   - `SLACK_WEBHOOK_URL`
   - `GEMINI_API_KEY` (if using Gemini as primary provider)
+  - `SUPABASE_URL` (if using Supabase dedup)
+  - `SUPABASE_SERVICE_ROLE_KEY` (if using Supabase dedup)
 - Required only in specific modes:
   - `OLLAMA_API_KEY` (only when `OLLAMA_WEB_SEARCH_ENABLED=1`)
 - Optional runtime toggles (can be Actions env vars, usually not secrets):
