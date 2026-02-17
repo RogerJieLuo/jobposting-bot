@@ -1,32 +1,37 @@
-You are evaluating multiple backend job postings for one candidate.
+System goal:
+Evaluate multiple backend jobs for one candidate and return compact machine-readable JSON.
 
-Candidate Profile:
+Inputs:
+Candidate profile:
 {candidate_profile}
 
-Evaluation Rules:
+Evaluation rules:
 {evaluation_rules}
 
-Jobs to evaluate:
+Jobs:
 {jobs_block}
 
-Task:
-1. Evaluate each job against the candidate profile and rules.
-2. Compare all jobs against each other and assign a relative rank (1 = best).
-3. Assign a score (0-100) for each job.
-4. Decide recommendation for each job: Apply / Consider / Skip.
-5. Keep summary concise and actionable (max 2 bullets or 2 short sentences per job).
+Required reasoning targets per job:
+1. Profile fit and core skill match.
+2. Score 0-100.
+3. Recommendation: Apply / Consider / Skip.
+4. Relative rank across all jobs (1 = best).
 
-Output requirements:
-- Return ONLY valid JSON (no markdown, no extra text).
-- JSON schema:
+Output contract (strict):
+- Return JSON only. No markdown. No prose outside JSON.
+- Include one result for each provided JOB_ID.
+- Keep summary short (<= 180 chars, plain text).
+- If unsure, still return best-effort values. Do not omit a job.
+
+JSON shape:
 {{
   "jobs": [
     {{
-      "job_id": "string",
+      "job_id": "JOB_ID from input",
       "recommendation": "Apply|Consider|Skip",
       "score": 0,
       "rank": 1,
-      "summary": "string"
+      "summary": "short explanation"
     }}
   ],
   "top_picks": ["job_id_1", "job_id_2"]

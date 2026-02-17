@@ -13,6 +13,7 @@ from llm.prompt_builder import (
 )
 from llm.parsing import extract_recommendation
 from utils.config_loader import load_gemini_api_key
+from utils.logger import logger
 
 
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-pro")
@@ -203,7 +204,20 @@ def _chunk_jobs(jobs, include_company_screening):
             continue
 
         prompt = _build_prompt_for_jobs(candidate, include_company_screening=include_company_screening)
-        if len(prompt) > MAX_BATCH_PROMPT_CHARS and current:
+        prompt_len = len(prompt)
+        logger.info(
+            "Gemini batch prompt chars=%d limit=%d candidate_jobs=%d",
+            prompt_len,
+            MAX_BATCH_PROMPT_CHARS,
+            len(candidate),
+        )
+        if prompt_len > MAX_BATCH_PROMPT_CHARS and current:
+            logger.warning(
+                "Gemini batch prompt exceeds limit; split chunk. chars=%d limit=%d candidate_jobs=%d",
+                prompt_len,
+                MAX_BATCH_PROMPT_CHARS,
+                len(candidate),
+            )
             chunks.append(current)
             current = [job]
             continue

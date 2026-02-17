@@ -1,28 +1,26 @@
-You are evaluating job fit for a backend engineer.
+Task:
+Evaluate one backend job for one candidate. Keep output concise and deterministic.
 
+Candidate profile:
 {candidate_profile}
 
+Evaluation rules:
 {evaluation_rules}
 
-Web Search Context (job + company):
+Job context:
 {company_context}
 
-Job Description:
+Job description:
 {job_description}
 
-Please:
-1. Extract required core skills
-2. Compare with candidate profile
-3. Identify missing but learnable skills
-4. Assign a match score (0-100)
-5. Categorize:
-   - 80-100: Strong match
-   - 65-79: Stretch but reasonable
-   - 50-64: Risky but possible
-   - Below 50: Not recommended
-6. Give a clear recommendation: Apply / Consider / Skip
-7. Brief explanation (max 6 bullet points)
+Required checks:
+1. Core skill fit vs candidate profile.
+2. Missing but learnable skills.
+3. Match score (0-100) and recommendation (Apply / Consider / Skip).
 
-Please give me an answer as format:
-Clear recommendation: Apply / Consider / Skip, match score
-Brief explanation (max 6 bullet points)
+Output format (strict):
+Clear recommendation: Apply / Consider / Skip, match score <0-100>
+Brief explanation:
+- bullet 1
+- bullet 2
+- up to 6 bullets total

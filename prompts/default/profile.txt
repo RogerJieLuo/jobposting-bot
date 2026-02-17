@@ -1,13 +1,16 @@
 Candidate Profile:
-- 6+ years backend development experience (Java)
-- Experience with distributed systems and scalable backend services
-- AWS (EC2, S3, Lambda, DynamoDB)
-- SQL + NoSQL databases
-- Production system ownership
-- Experience building high-availability systems
-- Familiar with system design and architecture discussions
+Mid-level Backend Engineer with 6+ years of experience in high-reliability distributed systems and cloud-native infrastructure.
+Currently Software Development Engineer at Amazon Payments, maintaining and scaling high-availability payment services supporting hundreds of internal services.
 
-Career Goal:
-- Targeting mid-level to mid-senior backend roles
-- Open to stretch roles slightly above current level
-- Willing to learn missing secondary skills quickly
+Key experience:
+Designed shadow/mock services to test features across 100+ dependent services
+Migrated synchronous workflows to asynchronous processing (1 → 20 concurrent executions)
+Built automated expiration/purging pipelines (280 TPS) reducing S3 costs and enforcing data lifecycle compliance
+Integrated high-throughput data migration pipelines (200 TPS)
+Implemented monitoring and metrics in AWS CloudWatch for proactive anomaly detection
+
+Technical stack:
+Primary: Java, Spring Boot, AWS (CDK, Lambda, Step Functions, DynamoDB, S3, CloudWatch)
+Databases: SQL & NoSQL (Redshift, DynamoDB)
+Distributed systems, async processing, system design
+CI/CD, Infrastructure-as-Code, automated testing
